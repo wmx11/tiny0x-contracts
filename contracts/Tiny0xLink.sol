@@ -18,18 +18,21 @@ contract Tiny0xLink is
 {
     using Counters for Counters.Counter;
 
+    uint256 private constant DECIMALS = 18;
+    uint256 private constant MAX_PRICE = 1 * 10 ** DECIMALS; // $1
+
     Counters.Counter private _tokenIdCounter;
     address private _feesReceiver;
-    IERC20 private _stableToken;
+    IERC20 private _stableCoin;
 
-    constructor() ERC721("Tiny0xLink", "T0XL") {}
+    constructor() ERC721("Tiny0xLink", "T0XLink") {}
 
     function setFeesReceiver(address feesReceiver) public onlyOwner {
         _feesReceiver = feesReceiver;
     }
 
-    function setStableToken(address stableToken) public onlyOwner {
-        _stableToken = IERC20(stableToken);
+    function setstableCoin(address stableCoinAddress) public onlyOwner {
+        _stableCoin = IERC20(stableCoinAddress);
     }
 
     function safeMint(address to, string memory uri) public onlyOwner {
@@ -39,8 +42,19 @@ contract Tiny0xLink is
         _setTokenURI(tokenId, uri);
     }
 
-    function withdrawTokens(uint256 amount) public onlyOwner {
-        _stableToken.transfer(_feesReceiver, amount);
+    function safeMintWithPrice(
+        address to,
+        string memory uri,
+        uint256 price
+    ) public onlyOwner {
+        safeMint(to, uri);
+        require(
+            price <= MAX_PRICE,
+            "Tiny0x Link NFT Price cannot exceed MAX_PRICE"
+        );
+        if (price > 0) {
+            _stableCoin.transferFrom(msg.sender, _feesReceiver, price);
+        }
     }
 
     // The following functions are overrides required by Solidity.
